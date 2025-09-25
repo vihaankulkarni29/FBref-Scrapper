@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-selfcheck.json
+
+# Data Files (Do not commit data to the repository)
+raw_data/
+processed_data/
+model_data/
+*.csv
+
+# IDE / Editor specific
+.vscode/
+.idea/
