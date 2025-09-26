@@ -4,7 +4,7 @@ This repository contains a complete, automated data pipeline for collecting, cle
 
 ## Project Overview
 
-The pipeline is composed of six sequential Python scripts, each performing a specific task in the data workflow.
+The pipeline is composed of eight Python scripts, with the first six forming the core sequential workflow for data processing and prediction, and the last two providing additional data scraping tools for enhanced analysis.
 
 ### The Data Pipeline
 
@@ -14,8 +14,11 @@ The pipeline is composed of six sequential Python scripts, each performing a spe
 4.  **`04_model_data_prep.py`**: Prepares the data for modeling. It calculates a proxy `FantasyPoints` target variable, selects the most predictive features, performs one-hot encoding on categorical data, and splits the data into training and testing sets.
 5.  **`05_train_model.py`**: Trains a Random Forest Regressor model on the prepared data. It loads the training and testing sets, trains the model, evaluates performance using Mean Absolute Error (MAE), and saves the trained model to the `trained_models/` directory.
 6.  **`06_make_predictions.py`**: Loads the trained model and generates predictions on the latest player data. It prepares the prediction data to match the training format, makes predictions, and saves a sorted report of predicted FPL points to the `predictions/` directory.
+7.  **`07_fixture_scraper.py`**: Scrapes and cleans Premier League fixture lists for multiple seasons from FBREF, including scores, xG, and match details. Saves a master CSV file to the `raw_data/` directory for fixture analysis.
+8.  **`08_h2h_scraper.py`**: Scrapes head-to-head match logs for all Premier League teams across specified seasons, cleaning and saving individual CSV files for each team-season to the `raw_data/h2h/` directory for historical performance insights.
 
 ### Output Directories
+- **`raw_data/`**: Contains scraped raw data files, including fixtures and head-to-head logs.
 - **`processed_data/`**: Contains cleaned and feature-engineered data files.
 - **`model_data/`**: Contains training and testing datasets (`X_train.csv`, `y_train.csv`, etc.).
 - **`trained_models/`**: Contains the saved trained model (`fpl_oracle_model.joblib`).
@@ -25,4 +28,5 @@ The pipeline is composed of six sequential Python scripts, each performing a spe
 
 1.  Clone the repository.
 2.  Install the required dependencies: `pip install -r requirements.txt`
-3.  Run the scripts in numerical order, located in the `data_pipelines/` directory. Use `python data_pipelines/XX_script_name.py` from the project root.
+3.  Run the core pipeline scripts (01-06) in numerical order, located in the `data_pipelines/` directory. Use `python data_pipelines/XX_script_name.py` from the project root.
+4.  Optionally, run the additional scrapers (07-08) to collect supplementary data for enhanced analysis.
