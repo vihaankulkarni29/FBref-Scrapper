@@ -11,23 +11,33 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from io import StringIO
 import logging
+import random
 
 def get_html_with_selenium(url: str) -> str | None:
-    """Fetches the full HTML content of a page using Selenium."""
+    """Fetches the full HTML content of a page using Selenium with maximum stealth options."""
     options = Options()
     options.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+    
+    # --- MAXIMUM STEALTH PROTOCOL ---
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1920,1200")
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36")
+    
+    options.add_argument('--disable-blink-features=AutomationControlled')
+    options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
+    options.add_experimental_option('useAutomationExtension', False)
 
     driver = None
     try:
         service = ChromeService(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
+        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         driver.get(url)
-        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.ID, "matchlogs_for")))
-        time.sleep(2)
+        WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.stats_table")))
+        time.sleep(3)
         return driver.page_source
     except Exception as e:
         logging.error(f"Selenium error for URL {url}: {e}")
@@ -41,69 +51,70 @@ def main():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
     # --- Configuration ---
+    # Corrected Squad IDs and URL-friendly names
     TEAMS_CONFIG = {
-        "Arsenal": "18bb7c10", "Aston Villa": "8602292d", "Bournemouth": "4ba7c610",
-        "Brentford": "cd051869", "Brighton": "d07537b9", "Chelsea": "cff3d9bb",
-        "Crystal Palace": "47c64c55", "Everton": "d3fd31cc", "Fulham": "fd962109",
-        "Ipswich Town": "c477b224", "Leicester City": "a2d435b3", "Liverpool": "822bd0ba",
-        "Manchester City": "b8fd03ef", "Manchester Utd": "19538871", "Newcastle Utd": "b2b47a98",
-        "Nott'ham Forest": "e4a775cb", "Southampton": "33c895d4", "Tottenham": "361ca564",
-        "West Ham": "7c21e445", "Wolves": "8cec06e1"
+        "Arsenal": ("18bb7c10", "Arsenal"), "Aston Villa": ("8602292d", "Aston-Villa"), 
+        "Bournemouth": ("4ba7cbea", "Bournemouth"), "Brentford": ("cd051869", "Brentford"), # CORRECTED SQUAD ID
+        "Brighton": ("d07537b9", "Brighton-and-Hove-Albion"), "Chelsea": ("cff3d9bb", "Chelsea"),
+        "Crystal Palace": ("47c64c55", "Crystal-Palace"), "Everton": ("d3fd31cc", "Everton"), 
+        "Fulham": ("fd962109", "Fulham"), "Ipswich Town": ("c477b224", "Ipswich-Town"), 
+        "Leicester City": ("a2d435b3", "Leicester-City"), "Liverpool": ("822bd0ba", "Liverpool"),
+        "Manchester City": ("b8fd03ef", "Manchester-City"), "Manchester Utd": ("19538871", "Manchester-United"),
+        "Newcastle Utd": ("b2b47a98", "Newcastle-United"), "Nott'ham Forest": ("e4a775cb", "Nottingham-Forest"),
+        "Southampton": ("33c895d4", "Southampton"), "Tottenham": ("361ca564", "Tottenham-Hotspur"),
+        "West Ham": ("7c21e445", "West-Ham-United"), "Wolves": ("8cec06e1", "Wolverhampton-Wanderers")
     }
     SEASONS_TO_SCRAPE = ["2023-2024", "2024-2025"]
     OUTPUT_DIR = "raw_data/h2h"
+    MAX_RETRIES = 3
+    RETRY_DELAY = 10
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    for season in SEASONS_TO_SCRAPE:
-        logging.info(f"--- Starting H2H Scrape for Season: {season} ---")
-        for team_name, squad_id in TEAMS_CONFIG.items():
+    for team_display_name, (squad_id, url_name) in TEAMS_CONFIG.items():
+        for season in SEASONS_TO_SCRAPE:
+            output_filename = f"{team_display_name.replace(' ', '_')}_{season}_h2h.csv"
+            output_path = os.path.join(OUTPUT_DIR, output_filename)
+
+            if os.path.exists(output_path):
+                logging.info(f"Data for {team_display_name}, {season} already exists. Skipping.")
+                continue
+
+            url = f"https://fbref.com/en/squads/{squad_id}/{season}/matchlogs/all_comps/schedule/{url_name}-Scores-and-Fixtures-All-Competitions"
             
-            url = f"https://fbref.com/en/squads/{squad_id}/{season}/matchlogs/all_comps/{team_name}-Match-Logs-All-Competitions"
-            logging.info(f"Scraping H2H data for: {team_name}")
-            
-            html_content = get_html_with_selenium(url)
+            for attempt in range(MAX_RETRIES):
+                logging.info(f"Scraping H2H data for: {team_display_name}, {season} (Attempt {attempt + 1}/{MAX_RETRIES})")
+                html_content = get_html_with_selenium(url)
+                
+                if html_content:
+                    break 
+                
+                logging.warning(f"Failed to get HTML on attempt {attempt + 1}. Retrying in {RETRY_DELAY} seconds...")
+                time.sleep(RETRY_DELAY)
             
             if not html_content:
-                logging.error(f"Failed to get HTML for {team_name}, {season}. Skipping.")
+                logging.error(f"Failed to get HTML for {team_display_name}, {season} after {MAX_RETRIES} attempts. Skipping.")
                 continue
 
             soup = BeautifulSoup(html_content, 'html.parser')
-            table = soup.find('table', {'id': 'matchlogs_for'})
+            table = soup.find('table', {'class': 'stats_table'})
             
             if not table:
-                logging.warning(f"No match log table found for {team_name}, {season}. Skipping.")
+                logging.warning(f"No match log table found for {team_display_name}, {season}. Skipping.")
                 continue
                 
             df = pd.read_html(StringIO(str(table)))[0]
             
-            # --- ROBUST CLEANING FIX ---
-            # 1. Flatten the multi-level column headers
-            if isinstance(df.columns, pd.MultiIndex):
-                df.columns = df.columns.map('_'.join).str.strip()
+            df = df[['Date', 'Comp', 'Opponent', 'Result', 'GF', 'GA']]
+            df.columns = ['Date', 'Competition', 'Opponent', 'Result', 'Goals_For', 'Goals_Against']
+            df_cleaned = df.dropna(subset=['Date', 'Opponent']).copy()
+            df_cleaned = df_cleaned[df_cleaned['Date'] != 'Date']
             
-            # 2. Select the columns we need using a flexible approach
-            # Find the actual column names by looking for keywords
-            date_col = [col for col in df.columns if 'Date' in col][0]
-            comp_col = [col for col in df.columns if 'Comp' in col][0]
-            opp_col = [col for col in df.columns if 'Opponent' in col][0]
-            result_col = [col for col in df.columns if 'Result' in col][0]
-            gf_col = [col for col in df.columns if 'GF' in col][0]
-            ga_col = [col for col in df.columns if 'GA' in col][0]
-            
-            # Create a new DataFrame with just these columns
-            df_selected = df[[date_col, comp_col, opp_col, result_col, gf_col, ga_col]].copy()
-            
-            # 3. Rename them to a clean, final format
-            df_selected.columns = ['Date', 'Competition', 'Opponent', 'Result', 'Goals_For', 'Goals_Against']
-            
-            # 4. Drop empty/header rows
-            df_cleaned = df_selected.dropna(subset=['Date']).copy()
-            
-            # Save the raw file
-            output_filename = f"{team_name.replace(' ', '_')}_{season}_h2h.csv"
-            output_path = os.path.join(OUTPUT_DIR, output_filename)
             df_cleaned.to_csv(output_path, index=False)
             logging.info(f"Successfully saved raw H2H data to {output_path}")
+            
+            human_delay = random.uniform(5, 10)
+            logging.info(f"Pausing for {human_delay:.2f} seconds...")
+            time.sleep(human_delay)
 
     logging.info("\n--- H2H Scraping Mission Complete ---")
 
