@@ -4,7 +4,7 @@ This repository contains a complete, automated data pipeline for collecting, cle
 
 ## Project Overview
 
-The pipeline is composed of eight Python scripts, with the first six forming the core sequential workflow for data processing and prediction, and the last two providing additional data scraping tools for enhanced analysis.
+The pipeline is composed of twelve Python scripts, forming the core sequential workflow for data processing, feature integration, and prediction, with additional tools for scraping supplementary data.
 
 ### The Data Pipeline
 
@@ -16,17 +16,22 @@ The pipeline is composed of eight Python scripts, with the first six forming the
 6.  **`06_make_predictions.py`**: Loads the trained model and generates predictions on the latest player data. It prepares the prediction data to match the training format, makes predictions, and saves a sorted report of predicted FPL points to the `predictions/` directory.
 7.  **`07_fixture_scraper.py`**: Scrapes and cleans Premier League fixture lists for multiple seasons from FBREF, including scores, xG, and match details. Saves a master CSV file to the `raw_data/` directory for fixture analysis.
 8.  **`08_h2h_scraper.py`**: Scrapes head-to-head match logs for all Premier League teams across specified seasons, cleaning and saving individual CSV files for each team-season to the `raw_data/h2h/` directory for historical performance insights.
+9.  **`09_h2h_processing.py`**: Processes raw head-to-head match data, cleans it, removes duplicates, and creates a master H2H file for historical analysis.
+10. **`10_integrate_h2h_features.py`**: Integrates head-to-head statistics into the main player dataset, engineering features like historical win percentages and average goals for enhanced predictive modeling.
+11. **`11_model_data_prep_v4.py`**: Prepares the v4 dataset for modeling by calculating fantasy points, selecting features including new H2H metrics, applying one-hot encoding, and splitting into training and testing sets.
+12. **`12_train_model_v4.py`**: Trains the v4 version of the Random Forest Regressor model using the enhanced dataset with H2H features, evaluates performance, and saves the improved model.
 
 ### Output Directories
 - **`raw_data/`**: Contains scraped raw data files, including fixtures and head-to-head logs.
-- **`processed_data/`**: Contains cleaned and feature-engineered data files.
+- **`processed_data/`**: Contains cleaned and feature-engineered data files, including master H2H data and integrated datasets.
 - **`model_data/`**: Contains training and testing datasets (`X_train.csv`, `y_train.csv`, etc.).
-- **`trained_models/`**: Contains the saved trained model (`fpl_oracle_model.joblib`).
+- **`model_data_v4/`**: Contains the v4 training and testing datasets with H2H features (`X_train.csv`, `y_train.csv`, etc.).
+- **`trained_models/`**: Contains the saved trained models (`fpl_oracle_model.joblib` and `fpl_oracle_model_v4.joblib`).
 - **`predictions/`**: Contains the prediction reports (`gameweek_predictions.csv`).
 
 ### How to Run
 
 1.  Clone the repository.
 2.  Install the required dependencies: `pip install -r requirements.txt`
-3.  Run the core pipeline scripts (01-06) in numerical order, located in the `data_pipelines/` directory. Use `python data_pipelines/XX_script_name.py` from the project root.
+3.  Run the core pipeline scripts (01-12) in numerical order, located in the `data_pipelines/` directory. Use `python data_pipelines/XX_script_name.py` from the project root. Scripts 01-12 form the complete workflow, with 12 being the latest v4 model incorporating H2H features.
 4.  Optionally, run the additional scrapers (07-08) to collect supplementary data for enhanced analysis.
