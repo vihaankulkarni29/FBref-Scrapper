@@ -15,9 +15,8 @@ from io import StringIO
 def get_html_with_selenium(url: str, retries=3, delay=5) -> str | None:
     """Fetches HTML content using Selenium with stealth options and retries."""
     options = Options()
-    chrome_binary = os.environ.get('CHROME_BINARY')
-    if chrome_binary:
-        options.binary_location = chrome_binary
+    if 'CHROME_BINARY' in os.environ:
+        options.binary_location = os.environ['CHROME_BINARY']
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -33,8 +32,7 @@ def get_html_with_selenium(url: str, retries=3, delay=5) -> str | None:
             driver = webdriver.Chrome(service=service, options=options)
             driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             driver.get(url)
-            WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.stats_table")))
-            time.sleep(2)
+            WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, "div.table_wrapper")))
             return driver.page_source
         except Exception as e:
             logging.warning(f"Attempt {attempt + 1} failed for {url}: {e}")
@@ -48,26 +46,42 @@ def get_html_with_selenium(url: str, retries=3, delay=5) -> str | None:
                 driver.quit()
 
 def parse_and_save_table(html_content: str, table_id: str, output_path: str):
-    """Parses a specific table from HTML and saves it to a CSV."""
+    """Parses a specific table from HTML and saves it to a CSV with clean headers."""
     soup = BeautifulSoup(html_content, 'html.parser')
     
-    # First, try finding the table directly by its ID
-    table = soup.find('table', {'id': table_id})
-    
-    # If not found, search within comments (a common FBREF practice)
-    if not table:
+    table = None
+    table_div = soup.find('div', id=f'div_{table_id}')
+
+    if table_div:
         from bs4 import Comment
-        comments = soup.find_all(string=lambda text: isinstance(text, Comment))
-        for comment in comments:
+        comment = table_div.find(string=lambda text: isinstance(text, Comment))
+        if comment:
             comment_soup = BeautifulSoup(comment, 'html.parser')
-            if comment_soup.find('table', {'id': table_id}):
-                table = comment_soup.find('table', {'id': table_id})
-                break
-    
+            table = comment_soup.find('table', {'id': table_id})
+        
+        if not table:
+            table = table_div.find('table', {'id': table_id})
+
     if table:
+        # --- UPGRADED CLEANING LOGIC ---
         df = pd.read_html(StringIO(str(table)))[0]
+        
+        # 1. Robustly flatten MultiIndex headers if they exist
+        if isinstance(df.columns, pd.MultiIndex):
+            # The second level (index 1) contains the real column names
+            df.columns = df.columns.get_level_values(1)
+        
+        # 2. Remove junk rows where 'Rk' is not a number (catches repeated headers)
+        df = df[pd.to_numeric(df['Rk'], errors='coerce').notna()]
+        
+        # 3. Drop the 'Rk' column as it's just an index
+        df = df.drop(columns=['Rk'])
+        
+        # 4. Drop any columns that are completely empty after parsing
+        df = df.dropna(axis=1, how='all')
+        
         df.to_csv(output_path, index=False)
-        logging.info(f"Successfully parsed and saved table to {output_path}")
+        logging.info(f"Successfully parsed, cleaned, and saved table to {output_path}")
     else:
         logging.warning(f"Could not find table with ID: {table_id}")
 
@@ -77,7 +91,7 @@ def main():
 
     # --- Configuration for 2025-2026 Season ---
     SEASON = "2025-2026"
-    SEASON_URL = "https://fbref.com/en/comps/9/stats/Premier-League-Stats" # URL for the current season
+    SEASON_URL = "https://fbref.com/en/comps/9/stats/Premier-League-Stats" 
     TABLES_TO_SCRAPE = {
         "stats_standard": "standard_stats",
         "stats_shooting": "shooting_stats",
@@ -104,3 +118,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

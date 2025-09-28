@@ -8,7 +8,7 @@ The pipeline is composed of twelve Python scripts, forming the core sequential w
 
 ### The Data Pipeline
 
-1.  **`01_fbref_scraper.py`**: A robust, block-resistant web scraper that uses Selenium to extract multiple seasons of detailed player statistics from FBREF.com. It handles anti-scraping measures like User-Agent rotation and can be configured for proxies.
+1.  **`01_fbref_scraper.py`**: A robust, block-resistant web scraper that uses Selenium to extract multiple seasons of detailed player statistics from FBREF.com. It handles anti-scraping measures like User-Agent rotation and can be configured for proxies. To specify a custom Chrome binary path (required on some systems), set the `CHROME_BINARY` environment variable (e.g., `export CHROME_BINARY=/path/to/chrome`). If not set, ChromeDriver will auto-detect the binary.
 2.  **`02_data_processing.py`**: Takes the raw CSV files from the scraper, cleans messy multi-level headers, merges all stat tables for each season, and consolidates them into a single, clean master file.
 3.  **`03_feature_engineering.py`**: Reads the clean master file and engineers advanced predictive features, such as "per 90 minutes" metrics (`xG_p90`), efficiency ratios (`Gls_minus_xG`), and simplified positional groupings.
 4.  **`04_model_data_prep.py`**: Prepares the data for modeling. It calculates a proxy `FantasyPoints` target variable, selects the most predictive features, performs one-hot encoding on categorical data, and splits the data into training and testing sets.
