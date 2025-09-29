@@ -4,7 +4,7 @@ This repository contains a complete, automated data pipeline for collecting, cle
 
 ## Project Overview
 
-The pipeline is composed of twelve Python scripts, forming the core sequential workflow for data processing, feature integration, and prediction, with additional tools for scraping supplementary data.
+The pipeline is composed of fifteen Python scripts, forming the core sequential workflow for data processing, feature integration, and prediction, with additional tools for scraping supplementary data.
 
 ### The Data Pipeline
 
@@ -20,6 +20,9 @@ The pipeline is composed of twelve Python scripts, forming the core sequential w
 10. **`10_integrate_h2h_features.py`**: Integrates head-to-head statistics into the main player dataset, engineering features like historical win percentages and average goals for enhanced predictive modeling.
 11. **`11_model_data_prep_v4.py`**: Prepares the v4 dataset for modeling by calculating fantasy points, selecting features including new H2H metrics, applying one-hot encoding, and splitting into training and testing sets.
 12. **`12_train_model_v4.py`**: Trains the v4 version of the Random Forest Regressor model using the enhanced dataset with H2H features, evaluates performance, and saves the improved model.
+13. **`13_make_predictions_v4.py`**: Loads the trained v4 model with H2H features and generates predictions on the latest player data, saving a sorted report of predicted FPL points.
+14. **`14_fpl_api_client.py`**: Connects to the official FPL API to fetch master player data and detailed gameweek histories, with improved error handling, timeouts, and retry logic for API reliability.
+15. **`15_per_match_scraper.py`**: Scrapes per-match player performance data from FotMob for all historical fixtures, saving individual CSV files for each match.
 
 ### Output Directories
 - **`raw_data/`**: Contains scraped raw data files, including fixtures and head-to-head logs.
@@ -33,5 +36,5 @@ The pipeline is composed of twelve Python scripts, forming the core sequential w
 
 1.  Clone the repository.
 2.  Install the required dependencies: `pip install -r requirements.txt`
-3.  Run the core pipeline scripts (01-12) in numerical order, located in the `data_pipelines/` directory. Use `python data_pipelines/XX_script_name.py` from the project root. Scripts 01-12 form the complete workflow, with 12 being the latest v4 model incorporating H2H features.
-4.  Optionally, run the additional scrapers (07-08) to collect supplementary data for enhanced analysis.
+3.  Run the core pipeline scripts (01-15) in numerical order, located in the `data_pipelines/` directory. Use `python data_pipelines/XX_script_name.py` from the project root. Scripts 01-12 form the complete workflow, with 12 being the latest v4 model incorporating H2H features. Scripts 13-15 provide additional prediction and scraping capabilities.
+4.  Optionally, run the additional scrapers (07-08, 15) to collect supplementary data for enhanced analysis.
