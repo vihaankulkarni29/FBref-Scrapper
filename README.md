@@ -84,6 +84,45 @@ python data_pipelines/14_fpl_api_client.py
 - Machine learning predictions using Random Forest
 - Comprehensive data cleaning and processing pipeline
 
+## Data Acquisition
+
+The repository includes two professional-grade scrapers for collecting clean, analysis-ready data from FBREF and SofaScore.
+
+### FBREF Harvester (`fbref_harvester.py`)
+
+Scrapes comprehensive season-level aggregate data for all Premier League players and teams.
+
+**Features:**
+- Configurable for multiple seasons
+- Selenium with anti-detection measures ("Ghost Protocol")
+- Extracts player stats (Standard, Shooting, Passing, Goal and Shot Creation, Defensive Actions, Possession) and fixture data
+- In-memory data cleaning: handles multi-level headers, removes junk rows, ensures correct data types
+- Outputs: `fbref_player_stats_[season].csv` (merged player stats), `fbref_fixtures_[season].csv` (match results with xG)
+
+**Usage:**
+```bash
+python fbref_harvester.py
+```
+
+### SofaScore Harvester (`sofascore_harvester.py`)
+
+Scrapes granular, per-match performance data for every player in every Premier League match.
+
+**Features:**
+- Fixture-centric approach: uses `fbref_fixtures_[season].csv` as to-do list
+- Intelligent search on SofaScore to find correct match links using dates
+- Extracts starting formations for both teams (e.g., 4-3-3)
+- Player positional heatmaps: simplified as center of gravity coordinates (heatmap_center_x, heatmap_center_y)
+- Detailed player stats from all tabs (Attacking, Defending, Passing, etc.): SofaScore Rating, xG, xA, Shots, etc.
+- Outputs per-match CSVs in `sofascore_match_data/` (e.g., `2024-08-17_Arsenal_vs_Wolves.csv`)
+
+**Usage:**
+```bash
+python sofascore_harvester.py
+```
+
+**Note:** Run FBREF harvester first to generate fixture data required by SofaScore harvester.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
