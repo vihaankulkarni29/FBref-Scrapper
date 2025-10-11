@@ -1,6 +1,9 @@
-# FPL Data Analytics Pipeline
+# FPL Oracle: Fantasy Premier League Prediction Pipeline
 
-This repository contains a complete, automated data pipeline for collecting, cleaning, preparing, training, and predicting Fantasy Premier League (FPL) relevant football data from FBREF. The goal of this project is to create a feature-rich dataset, train a predictive model, and generate FPL point predictions to gain an analytical edge in FPL.
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+A comprehensive, automated data pipeline for Fantasy Premier League (FPL) analytics. This project scrapes football data from multiple sources, engineers predictive features, trains machine learning models, and generates FPL point predictions to provide analytical insights for fantasy football management.
 
 ## Project Overview
 
@@ -25,16 +28,70 @@ The pipeline is composed of fifteen Python scripts, forming the core sequential 
 15. **`15_per_match_scraper.py`**: Scrapes per-match player performance data from FotMob for all historical fixtures, saving individual CSV files for each match.
 
 ### Output Directories
-- **`raw_data/`**: Contains scraped raw data files, including fixtures and head-to-head logs.
-- **`processed_data/`**: Contains cleaned and feature-engineered data files, including master H2H data and integrated datasets.
-- **`model_data/`**: Contains training and testing datasets (`X_train.csv`, `y_train.csv`, etc.).
-- **`model_data_v4/`**: Contains the v4 training and testing datasets with H2H features (`X_train.csv`, `y_train.csv`, etc.).
-- **`trained_models/`**: Contains the saved trained models (`fpl_oracle_model.joblib` and `fpl_oracle_model_v4.joblib`).
-- **`predictions/`**: Contains the prediction reports (`gameweek_predictions.csv`).
+The following directories are created during pipeline execution:
+- **`raw_data/`**: Scraped raw data files, including fixtures and head-to-head logs.
+- **`processed_data/`**: Cleaned and feature-engineered data files, including master H2H data and integrated datasets.
+- **`model_data/`**: Training and testing datasets (`X_train.csv`, `y_train.csv`, etc.).
+- **`model_data_v4/`**: V4 training and testing datasets with H2H features.
+- **`trained_models/`**: Saved trained models (`.joblib` files).
+- **`predictions/`**: Prediction reports (`gameweek_predictions.csv`).
 
-### How to Run
+## Installation
 
-1.  Clone the repository.
-2.  Install the required dependencies: `pip install -r requirements.txt`
-3.  Run the core pipeline scripts (01-15) in numerical order, located in the `data_pipelines/` directory. Use `python data_pipelines/XX_script_name.py` from the project root. Scripts 01-12 form the complete workflow, with 12 being the latest v4 model incorporating H2H features. Scripts 13-15 provide additional prediction and scraping capabilities.
-4.  Optionally, run the additional scrapers (07-08, 15) to collect supplementary data for enhanced analysis.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/fpl-oracle.git
+   cd fpl-oracle
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Usage
+
+Run the pipeline scripts in sequence from the `data_pipelines/` directory:
+
+```bash
+# Core data collection and processing (01-06)
+python data_pipelines/01_fbref_scraper.py
+python data_pipelines/02_data_processing.py
+# ... continue with 03-06
+
+# Advanced features (07-13)
+# ... run additional scripts as needed
+
+# Predictions (14-16)
+python data_pipelines/14_fpl_api_client.py
+# ... etc.
+```
+
+**Note**: Scripts 01-12 form the complete workflow. Scripts 13-16 provide enhanced prediction capabilities.
+
+## Data Sources
+
+- **FBref.com**: Comprehensive player statistics
+- **Fantasy Premier League API**: Official FPL data and gameweek histories
+- **FotMob**: Per-match player performance data
+- **Additional Scrapers**: Fixtures and head-to-head match logs
+
+## Features
+
+- Automated data scraping with anti-bot measures
+- Advanced feature engineering (per-90 metrics, efficiency ratios)
+- Head-to-head statistics integration
+- Machine learning predictions using Random Forest
+- Comprehensive data cleaning and processing pipeline
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Disclaimer
+
+This project is for educational and analytical purposes only. Always respect website terms of service and API usage policies.

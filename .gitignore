@@ -12,7 +12,14 @@ pip-selfcheck.json
 raw_data/
 processed_data/
 model_data/
+model_data_*/
+predictions/
+trained_models/
 *.csv
+*.joblib
+*.pkl
+*.h5
+*.parquet
 
 # IDE / Editor specific
 .vscode/
